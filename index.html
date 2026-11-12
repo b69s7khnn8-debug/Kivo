@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Kivo</title>
-  <script src="https://unpkg.com"></script>
+  <script src="https://jsdelivr.net"></script>
   <style>
     :root {
       --bg: #09090b;
@@ -35,7 +35,6 @@
       overflow: hidden;
     }
 
-    /* Header */
     header {
       background: var(--surface);
       backdrop-filter: blur(16px);
@@ -89,6 +88,11 @@
       width: 6px;
       height: 6px;
       border-radius: 50%;
+      background: #f59e0b;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .dot.online {
       background: #10b981;
       box-shadow: 0 0 8px #10b981;
     }
@@ -110,7 +114,6 @@
       transform: scale(0.96);
     }
 
-    /* Login Screen */
     #setup-screen {
       flex: 1;
       display: flex;
@@ -177,11 +180,6 @@
       transform: scale(0.98);
     }
 
-    .btn-main:disabled {
-      opacity: 0.6;
-    }
-
-    /* Chat Screen */
     #chat-screen {
       display: none;
       flex: 1;
@@ -252,7 +250,6 @@
       opacity: 0.6;
     }
 
-    /* Input Bar */
     #input-area {
       background: var(--surface);
       backdrop-filter: blur(16px);
@@ -299,24 +296,24 @@
       <div class="logo-icon">K</div>
       <div class="logo-text">Kivo</div>
       <div class="status-pill" id="status-pill">
-        <span class="dot"></span>
+        <span class="dot" id="status-dot"></span>
         <span id="peer-count">1</span>
       </div>
     </div>
-    <button class="btn-invite" id="share-btn" onclick="copyInvite()">Пригласить</button>
+    <button class="btn-invite" id="share-btn">Пригласить</button>
   </header>
 
   <div id="setup-screen">
     <div class="hero-icon">K</div>
     <input type="text" id="username" placeholder="Имя" maxlength="20" autocomplete="off">
-    <button class="btn-main" id="start-btn" onclick="startChat()">Продолжить</button>
+    <button class="btn-main" id="start-btn">Продолжить</button>
   </div>
 
   <div id="chat-screen">
     <div id="messages"></div>
     <div id="input-area">
       <input type="text" id="msg-input" placeholder="Сообщение" autocomplete="off">
-      <button id="send-btn" onclick="sendMessage()">
+      <button id="send-btn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="22" y1="2" x2="11" y2="13"></line>
           <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
@@ -331,7 +328,14 @@
     let cryptoKey = null;
     let hostId = null;
     let username = localStorage.getItem("kivo_name") || "";
-    if (username) document.getElementById("username").value = username;
+
+    const usernameInput = document.getElementById("username");
+    const startBtn = document.getElementById("start-btn");
+    const shareBtn = document.getElementById("share-btn");
+    const sendBtn = document.getElementById("send-btn");
+    const msgInput = document.getElementById("msg-input");
+
+    if (username) usernameInput.value = username;
 
     async function initSecurity() {
       const hash = window.location.hash.substring(1);
@@ -378,11 +382,3 @@
 
     function setupConnection(conn) {
       conn.on("open", () => {
-        if (!connections.find(c => c.peer === conn.peer)) {
-          connections.push(conn);
-        }
-        updatePeers();
-      });
-
-      conn.on("data", async (msg) => {
-        if (msg.type === "chat") {
