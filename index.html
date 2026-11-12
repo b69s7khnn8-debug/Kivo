@@ -6,27 +6,18 @@
   <title>Kivo — Приватный мессенджер</title>
   <style>
     :root {
-      --bg: #0d0f12;
-      --surface: #171a21;
-      --primary: #6366f1;
-      --text: #f3f4f6;
-      --muted: #9ca3af;
-      --mine: #4f46e5;
-      --theirs: #1f242d;
+      --bg: #0d0f12; --surface: #171a21; --primary: #6366f1;
+      --text: #f3f4f6; --muted: #9ca3af; --mine: #4f46e5; --theirs: #1f242d;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: var(--bg); color: var(--text); height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-    
     header {
       background: var(--surface); padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
       border-bottom: 1px solid #262b36;
     }
-    .logo { font-weight: 800; font-size: 20px; letter-spacing: 0.5px; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .logo { font-weight: 800; font-size: 20px; color: #fff; display: flex; align-items: center; gap: 8px; }
     .badge { font-size: 11px; background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 3px 8px; border-radius: 12px; }
-    .btn-share {
-      background: #262b36; color: var(--text); border: none; padding: 8px 12px; border-radius: 8px; font-size: 13px; cursor: pointer;
-    }
-
+    .btn-share { background: #262b36; color: var(--text); border: none; padding: 8px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; }
     #setup-screen {
       flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 24px; max-width: 400px; margin: 0 auto; width: 100%; gap: 16px;
     }
@@ -36,10 +27,7 @@
       background: var(--surface); border: 1px solid #2d3340; color: #fff; padding: 14px; border-radius: 12px; font-size: 16px; outline: none; width: 100%;
     }
     input:focus { border-color: var(--primary); }
-    .btn-main {
-      background: var(--primary); color: #fff; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
-    }
-
+    .btn-main { background: var(--primary); color: #fff; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
     #chat-screen { display: none; flex: 1; flex-direction: column; height: calc(100dvh - 56px); }
     #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
     .msg { max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 15px; line-height: 1.4; word-wrap: break-word; }
@@ -47,14 +35,9 @@
     .msg.theirs { align-self: flex-start; background: var(--theirs); border-bottom-left-radius: 4px; }
     .msg-author { font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
     .mine .msg-author { display: none; }
-
-    #input-area {
-      background: var(--surface); padding: 10px 12px; display: flex; gap: 8px; border-top: 1px solid #262b36;
-    }
+    #input-area { background: var(--surface); padding: 10px 12px; display: flex; gap: 8px; border-top: 1px solid #262b36; }
     #msg-input { border-radius: 20px; padding: 10px 16px; }
-    #send-btn {
-      background: var(--primary); color: #fff; border: none; width: 44px; height: 44px; border-radius: 50%; font-size: 18px; cursor: pointer; flex-shrink: 0;
-    }
+    #send-btn { background: var(--primary); color: #fff; border: none; width: 44px; height: 44px; border-radius: 50%; font-size: 18px; cursor: pointer; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -79,31 +62,13 @@
     </div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://gstatic.com";
-    import { getDatabase, ref, push, onChildAdded } from "https://gstatic.com";
-
-    // === ВСТАВЬ СЮДА СВОЙ КОНФИГ ИЗ FIREBASE ===
-    const firebaseConfig = {
-      apiKey: "ВСТАВЬ_API_KEY",
-      authDomain: "ВСТАВЬ_PROJECT_://firebaseapp.com",
-      databaseURL: "https://ВСТАВЬ_PROJECT_://firebaseio.com",
-      projectId: "ВСТАВЬ_PROJECT_ID",
-      storageBucket: "ВСТАВЬ_PROJECT_://appspot.com",
-      messagingSenderId: "ВСТАВЬ_SENDER_ID",
-      appId: "ВСТАВЬ_APP_ID"
-    };
-    // ===========================================
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
+  <script>
     let roomId = "";
     let cryptoKey = null;
+    let channel = null;
     let username = localStorage.getItem("kivo_name") || "";
     if (username) document.getElementById("username").value = username;
 
-    // Генерация или извлечение ID комнаты и ключа из #hash ссылки
     async function initSecurity() {
       const hash = window.location.hash.substring(1);
       const params = new URLSearchParams(hash);
@@ -144,7 +109,7 @@
       }
     }
 
-    window.startChat = async function() {
+    async function startChat() {
       const inputName = document.getElementById("username").value.trim();
       if (!inputName) return alert("Введи никнейм!");
       username = inputName;
@@ -156,29 +121,32 @@
       document.getElementById("chat-screen").style.display = "flex";
       document.getElementById("share-btn").style.display = "block";
 
-      const messagesRef = ref(db, "rooms/" + roomId);
-      onChildAdded(messagesRef, async (snapshot) => {
-        const msg = snapshot.val();
+      // Локальный канал для теста между вкладками браузера
+      channel = new BroadcastChannel("kivo_" + roomId);
+      channel.onmessage = async (event) => {
+        const msg = event.data;
         const plainText = await decryptText(msg.iv, msg.data);
-        renderMessage(msg.author, plainText, msg.author === username);
-      });
-    };
+        renderMessage(msg.author, plainText, false);
+      };
+    }
 
-    window.sendMessage = async function() {
+    async function sendMessage() {
       const input = document.getElementById("msg-input");
       const text = input.value.trim();
       if (!text) return;
       input.value = "";
 
       const encrypted = await encryptText(text);
-      const messagesRef = ref(db, "rooms/" + roomId);
-      await push(messagesRef, {
-        author: username,
-        iv: encrypted.iv,
-        data: encrypted.data,
-        time: Date.now()
-      });
-    };
+      renderMessage(username, text, true);
+
+      if (channel) {
+        channel.postMessage({
+          author: username,
+          iv: encrypted.iv,
+          data: encrypted.data
+        });
+      }
+    }
 
     function renderMessage(author, text, isMine) {
       const box = document.getElementById("messages");
@@ -190,7 +158,7 @@
       authorEl.textContent = author;
 
       const textEl = document.createElement("div");
-      textEl.textContent = text; // Защита от XSS: используем textContent вместо innerHTML
+      textEl.textContent = text;
 
       div.appendChild(authorEl);
       div.appendChild(textEl);
@@ -198,13 +166,13 @@
       box.scrollTop = box.scrollHeight;
     }
 
-    window.copyInvite = function() {
+    function copyInvite() {
       navigator.clipboard.writeText(window.location.href);
-      alert("Секретная ссылка с ключом скопирована! Отправь её другу.");
-    };
+      alert("Секретная ссылка с ключом скопирована! Открой её в соседней вкладке для теста.");
+    }
 
     document.getElementById("msg-input").addEventListener("keypress", (e) => {
-      if (e.key === "Enter") window.sendMessage();
+      if (e.key === "Enter") sendMessage();
     });
   </script>
 </body>
